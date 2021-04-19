@@ -253,15 +253,15 @@ const stolovka = new MenuItem(
             formData.forEach(function(value, key) {
                 object[key] = value;
             }); 
-            const json = JSON.stringify(object);
+            
 
 
             fetch('server.php', {
                 method : "POST",
-                // headers : {
-                //     'Content-type': 'application/json'
-                // },
-                body: formData
+                headers : {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(object)
             }).then(data => data.text())
             .then(data => {
                 console.log(data);
@@ -312,6 +312,9 @@ function showThanksModal(message) {
     }, 4000);
 }
 
+    fetch('http://localhost:3000/menu')
+        .then(data => data.json())
+        .then(res => console.log(res));
 
 });
 
