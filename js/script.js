@@ -142,9 +142,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // Classes
 
     class MenuItem {
-        constructor(img, imgalt, subtitle, descr, price, parentSelector, ...classes) {
+        constructor(img, altimg, subtitle, descr, price, parentSelector, ...classes) {
             this.img = img;
-            this.imgalt = imgalt;
+            this.altimg = altimg;
             this.subtitle = subtitle;
             this.descr = descr;
             this.price = price;
@@ -169,7 +169,7 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             
             element.innerHTML = `
-                    <img src=${this.img} alt=${this.imgalt}>
+                    <img src=${this.img} alt=${this.altimg}>
                     <h3 class="menu__item-subtitle">${this.subtitle}</h3>
                     <div class="menu__item-descr">${this.descr}</div>
                     <div class="menu__item-divider"></div>
@@ -182,38 +182,23 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-const karavan = new MenuItem(
-    "img/tabs/elite.jpg",
-     "УПС",
-    '"Афган-Кебаб"',
-    "Это вам не Кюфта_бозбаш",
-    10,
-    ".menu .container",
-    "menu__item"
-    );
-    karavan.render();
+    const getResource = async (url) => {
+        const res = await fetch(url);
 
-const yut = new MenuItem(
-    "img/tabs/elite.jpg",
-    "УПС",
-    '"Люляшка"',
-    "Это вам не шашлык",
-    30,
-    ".menu .container",
-    "menu__item"
-    );
-    yut.render();
+        if(!res.ok) {
+           throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+        }
 
-const stolovka = new MenuItem(
-    "img/tabs/elite.jpg",
-    "УПС",
-    '"Комплексный"',
-    "Это вам не понравится",
-    20,
-    ".menu .container",
-    "menu__item"
-    );
-    stolovka.render();
+        return res.json();
+    };
+
+    getResource('http://localhost:3000/menu')
+        .then(data => {
+            data.forEach(({img, altimg, title, descr, price}) => {
+                new MenuItem(img, altimg, title, descr, price, '.menu .container').render();
+            });
+        });
+
 
     // Forms
 
@@ -225,11 +210,22 @@ const stolovka = new MenuItem(
     };
 
     forms.forEach(item => {
-        postData(item);
+        bindpostData(item);
     });
 
+    const postData = async (url, data) => {
+        const res = await fetch(url, {
+            method : "POST",
+            headers : {
+                'Content-type': 'application/json'
+            },
+            body: data
+        });
 
-    function postData(form) {
+        return res.json();
+    };
+
+    function bindpostData(form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -249,22 +245,12 @@ const stolovka = new MenuItem(
            
 
             const formData = new FormData(form);
-            const object = {};
-            formData.forEach(function(value, key) {
-                object[key] = value;
-            }); 
+
+            const json = JSON.stringify(Object.fromEntries(formData.entries()));
             
-
-
-            fetch('server.php', {
-                method : "POST",
-                headers : {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(object)
-            }).then(data => data.text())
+            
+            postData('http://localhost:3000/requests', json)
             .then(data => {
-                console.log(data);
                 showThanksModal(message.success);
                 form.reset();
                 statusMessage.remove();  
